@@ -37,7 +37,6 @@ get_a_record_ids() {
 }
 
 add_a_record() {
-    echo adding new A record for $DIGITALOCEAN_DOMAIN with value : $IP
     curl -X POST \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
@@ -51,7 +50,7 @@ add_a_record() {
           ,\"flags\":null         \
           ,\"tag\":null           \
           }"                      \
-      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records" > /dev/null 2>&1
+      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records" 2> /dev/null | jq '.domain_record.id'
 }
 
 delete_record_by_id() {
@@ -67,7 +66,12 @@ replace_a_record() {
         delete_record_by_id $id
     done
 
-    add_a_record
+    new_record_id=`add_a_record`
+    if [ "$new_record_id" == "null" ] ; then
+        echo unable to add new A record for $DIGITALOCEAN_DOMAIN with value : $1
+        return 1
+    fi
+    echo added new A record for $DIGITALOCEAN_DOMAIN with value : $1
 }
 
 
